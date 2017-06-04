@@ -21,7 +21,7 @@ var MongoClient = require('mongodb').MongoClient;
 var mongoSettings = require("./mongoConfig.json");
 
 var linkToMongo = `mongodb://${mongoSettings.dbuser}:${mongoSettings.dbpassword}@ds064799.mlab.com:64799/events`
-var linkToMongo = 'mongodb://mongoevents:4xEBhxCQtGsnckIXqS6aXYdvapHfpL9WyLdoGeZq1x6Lko2cxb2v9UJXoP0UsXcljEXd8EAs3gJcCFBbPJlD0A==@mongoevents.documents.azure.com:10255/?ssl=true'
+// var linkToMongo = 'mongodb://mongoevents:4xEBhxCQtGsnckIXqS6aXYdvapHfpL9WyLdoGeZq1x6Lko2cxb2v9UJXoP0UsXcljEXd8EAs3gJcCFBbPJlD0A==@mongoevents.documents.azure.com:10255/?ssl=true'
 // mongoose.connect(linkToMongo,(err)=>{
 //     if(err)
 //         console.log("HERE",err);
@@ -69,16 +69,30 @@ router.route('/events')
 	.post(function (req, res) {
 		if (!req.body)
 			return res.status(400).json({ "status": "there is no body" });
-		eventModel.addEvent(req.body, (err, result) => {
+		console.log("events from", req.body.source);
+		eventModel.addEvent(req.body.source, req.body.events,(err, result)=>{
 			if (err) {
 				console.log(err);
 				return res.status(500).json({ "status": "error while saving into database" });
 			}
 			return res.status(200).json({
-				"status": "event created",
+				"status": "events created",
 				"result": result
 			});
 		});
+
+		// eventModel.addEvent("1",req.body, (err, result) => {
+		// 	if (err) {
+		// 		console.log(err);
+		// 		return res.status(500).json({ "status": "error while saving into database" });
+		// 	}
+		// 	return res.status(200).json({
+		// 		"status": "event created",
+		// 		"result": result
+		// 	});
+		// });
+
+		// return res.status(200).json({"status":"events are created"})
 	})
 
 	// get all the events (accessed at GET http://localhost:8080/api/events)
