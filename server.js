@@ -15,8 +15,7 @@ app.use(morgan('dev')); // log requests to the console
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
-var port = process.env.PORT || 8080; // set our port
-98
+var port = process.env.PORT || 8080; // set our port 8080
 var MongoClient = require('mongodb').MongoClient;
 var mongoSettings = require("./mongoConfig.json");
 
@@ -75,6 +74,8 @@ router.route('/events')
 				console.log(err);
 				return res.status(500).json({ "status": "error while saving into database" });
 			}
+
+			user_events.sort((a,b)=>{return (a.startTime > b.startTime) ? 1 : ((b.startTime > a.startTime) ? -1 : 0);});
 			return res.status(200).json({
 				"status": "events created",
 				"result": result
