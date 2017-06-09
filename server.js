@@ -75,7 +75,6 @@ router.route('/events')
 				return res.status(500).json({ "status": "error while saving into database" });
 			}
 
-			user_events.sort((a,b)=>{return (a.startTime > b.startTime) ? 1 : ((b.startTime > a.startTime) ? -1 : 0);});
 			return res.status(200).json({
 				"status": "events created",
 				"result": result
@@ -104,6 +103,8 @@ router.route('/events')
 				console.log(err);
 				return res.status(400).json({ "status": "error while retrieving events from db" });
 			}
+			results.sort((a,b)=>{return (a.startTime > b.startTime) ? 1 : ((b.startTime > a.startTime) ? -1 : 0);});
+			
 			return res.status(200).json({ "events": results });
 		})
 	});
@@ -146,6 +147,8 @@ router.route('/events/:event_id')
 
 // REGISTER OUR ROUTES -------------------------------
 app.use('/api', router);
+
+
 
 // START THE SERVER
 // =============================================================================
