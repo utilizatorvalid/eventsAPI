@@ -27,19 +27,40 @@ class EventMongo {
 
         }, this);
     }
-    fetchAll(next) {
-        var cursor = this.db.collection('events').find();
+    fetchAll(params, next) {
+        console.log(params);
+        var query = {}
+        var mgrs_pattern;
+        if (params.hasOwnProperty("startTime") && params.hasOwnProperty("endTime")) {
+
+            query["startTime"] = { $gt: params.startTime, $lt: params.endTime };
+        }
+        if (params.hasOwnProperty("mgrs") && params.hasOwnProperty("nP")) {
+            mgrs_pattern = params.mgrs.split('');
+            mgrs_pattern[4 + parseInt( params.nP)] = '.'
+            mgrs_pattern[4 + 2 *parseInt(params.nP)] = '.'
+            query['venue.location.mgrs'] = "35TNN437242"
+            // query['venue.location.mgrs'] = { $regex: / ${mgrs_pattern.join('')} / , $options: 'si'  };
+            
+            query['venue.location.mgrs'] = { $regex: new RegExp(mgrs_pattern.join('')) , $options: 'si'  };
+        }
+        console.log(query);
+        var cursor = this.db.collection('events').find(
+            query
+        );
         cursor.toArray((err, results) => {
             if (err)
                 return next(err);
             next(null, results);
         });
     }
+
     findOne(id, next) {
-        console.log(`get from db event with id:${id} ${typeof id}`);
+        // console.log(`get from db event with id:${id} ${typeof id}`);
+
         var cursor = this.db.collection('events').find({ "_id": id.trim() })
         cursor.toArray((err, results) => {
-            console.log(results);
+            // console.log(results);
             if (err)
                 return next(err)
             next(null, results);
@@ -48,7 +69,7 @@ class EventMongo {
     }
     updateOne(id, event, next) {
         this.db.collection('events').updateOne(
-            { '_id': ObjectId(id) },
+            { '_id': id.trim() },
             { $set: event },
             (err, results) => {
                 if (err)
@@ -60,7 +81,7 @@ class EventMongo {
 
     deleteOne(id, next) {
         this.db.collection('events').deleteOne(
-            { '_id': id },
+            { '_id': id.trim() },
             (err, results) => {
                 if (err)
                     return next(err)

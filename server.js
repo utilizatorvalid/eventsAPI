@@ -27,20 +27,7 @@ var linkToMongo = `mongodb://${mongoSettings.dbuser}:${mongoSettings.dbpassword}
 // }); // connect to our database
 var EventMongo = require('./eventMongo');
 var eventModel;
-// CONNECTO TO DB
 
-MongoClient.connect(linkToMongo, (err, database) => {
-	if (!err) {
-		console.log('Successfuly connceted');
-		eventModel = new EventMongo(database);
-		app.listen(port, () => {
-			console.log(`event_api Listening on port: ${port}`);
-		})
-		return;
-	}
-	console.log("error on connecting to db");
-	console.log(err);
-})
 
 // ROUTES FOR OUR API
 // =============================================================================
@@ -49,11 +36,10 @@ MongoClient.connect(linkToMongo, (err, database) => {
 var router = express.Router();
 
 // middleware to use for all requests
-router.use(function (req, res, next) {
-	// do logging
-	console.log('Something is happening.');
-	next();
-});
+router.use((req, res, next) => {
+    decodeURI(req);
+    next()
+})
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function (req, res) {
@@ -69,7 +55,7 @@ router.route('/events')
 		if (!req.body)
 			return res.status(400).json({ "status": "there is no body" });
 		console.log("events from", req.body.source);
-		eventModel.addEvent(req.body.source, req.body.events,(err, result)=>{
+		eventModel.addEvent(req.body.source, req.body.events, (err, result) => {
 			if (err) {
 				console.log(err);
 				return res.status(500).json({ "status": "error while saving into database" });
@@ -80,31 +66,19 @@ router.route('/events')
 				"result": result
 			});
 		});
-
-		// eventModel.addEvent("1",req.body, (err, result) => {
-		// 	if (err) {
-		// 		console.log(err);
-		// 		return res.status(500).json({ "status": "error while saving into database" });
-		// 	}
-		// 	return res.status(200).json({
-		// 		"status": "event created",
-		// 		"result": result
-		// 	});
-		// });
-
-		// return res.status(200).json({"status":"events are created"})
 	})
 
 	// get all the events (accessed at GET http://localhost:8080/api/events)
 	.get(function (req, res) {
-		eventModel.fetchAll((err, results) => {
-			if (err)
-			{
+		console.log("get events with query", req.query)
+		
+		eventModel.fetchAll(req.query, (err, results) => {
+			if (err) {
 				console.log(err);
 				return res.status(400).json({ "status": "error while retrieving events from db" });
 			}
-			results.sort((a,b)=>{return (a.startTime > b.startTime) ? 1 : ((b.startTime > a.startTime) ? -1 : 0);});
-			
+			results.sort((a, b) => { return (a.startTime > b.startTime) ? 1 : ((b.startTime > a.startTime) ? -1 : 0); });
+
 			return res.status(200).json({ "events": results });
 		})
 	});
@@ -115,7 +89,7 @@ router.route('/events/:event_id')
 
 	// get the event with that id
 	.get(function (req, res) {
-		console.log("HERE", req.params.event_id)
+		// console.log("HERE", req.params.event_id)
 		eventModel.findOne(req.params.event_id, (err, results) => {
 			if (err)
 				res.status(400).json({ "status": "error while searching event from db" });
@@ -136,6 +110,7 @@ router.route('/events/:event_id')
 
 	// delete the event with this id
 	.delete(function (req, res) {
+		console.log(req.query);
 		eventModel.deleteOne(req.params.event_id, (err, result) => {
 			if (err)
 				return res.status(400).json({ "status": "error while removing event from db" });
@@ -149,8 +124,17 @@ router.route('/events/:event_id')
 app.use('/api', router);
 
 
+// CONNECTO TO DB and start Server
 
-// START THE SERVER
-// =============================================================================
-// app.listen(port);
-// console.log('Magic happens on port ' + port);
+MongoClient.connect(linkToMongo, (err, database) => {
+	if (!err) {
+		console.log('Successfuly connceted');
+		eventModel = new EventMongo(database);
+		app.listen(port, () => {
+			console.log(`event_api Listening on port: ${port}`);
+		})
+		return;
+	}
+	console.log("error on connecting to db");
+	console.log(err);
+})
