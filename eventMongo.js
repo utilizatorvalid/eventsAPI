@@ -11,8 +11,11 @@ class EventMongo {
         var totalInserted = 0;
         events.forEach(function (event) {
             //console.log(event.name);
-            event["_id"] = `${source}${event.id}`;
-            event.venue.location['mgrs'] = mgrs.forward([event.venue.location.longitude, event.venue.location.latitude], 3);
+            if(!event['_id'])
+                event["_id"] = `${source}${event.id}`;
+            
+            if(!event.venue.location.mgrs)
+                event.venue.location['mgrs'] = mgrs.forward([event.venue.location.longitude, event.venue.location.latitude], 3);
 
             this.db.collection('events').insertOne(
                 event,
@@ -39,10 +42,15 @@ class EventMongo {
             mgrs_pattern = params.mgrs.split('');
             mgrs_pattern[4 + parseInt( params.nP)] = '.'
             mgrs_pattern[4 + 2 *parseInt(params.nP)] = '.'
-            query['venue.location.mgrs'] = "35TNN437242"
+            // query['venue.location.mgrs'] = "35TNN437242"
             // query['venue.location.mgrs'] = { $regex: / ${mgrs_pattern.join('')} / , $options: 'si'  };
             
             query['venue.location.mgrs'] = { $regex: new RegExp(mgrs_pattern.join('')) , $options: 'si'  };
+        }
+        query['user'] = { $exists: false}
+        
+        if(params.hasOwnProperty('user')){
+            query['user'] = { $exists: true, $eq: params.user};
         }
         console.log(query);
         var cursor = this.db.collection('events').find(

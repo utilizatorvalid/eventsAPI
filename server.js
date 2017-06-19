@@ -19,8 +19,8 @@ var port = process.env.PORT || 8080; // set our port 8080
 var MongoClient = require('mongodb').MongoClient;
 var mongoSettings = require("./mongoConfig.json");
 
-var linkToMongo = `mongodb://${mongoSettings.dbuser}:${mongoSettings.dbpassword}@ds064799.mlab.com:64799/events`
-// var linkToMongo = 'mongodb://mongoevents:4xEBhxCQtGsnckIXqS6aXYdvapHfpL9WyLdoGeZq1x6Lko2cxb2v9UJXoP0UsXcljEXd8EAs3gJcCFBbPJlD0A==@mongoevents.documents.azure.com:10255/?ssl=true'
+// var linkToMongo = `mongodb://${mongoSettings.dbuser}:${mongoSettings.dbpassword}@ds064799.mlab.com:64799/events`
+var linkToMongo = 'mongodb://mongobd-events:l5tvXDPTfAAyT1ajuxWQiLleF6W0Tq4QK3fPIPNYtfx5T23QxaXvybLfpXfRSyeFsjMe7dPzUJH87hKZ8sRDzw==@mongobd-events.documents.azure.com:10255/?ssl=true'
 // mongoose.connect(linkToMongo,(err)=>{
 //     if(err)
 //         console.log("HERE",err);
@@ -37,8 +37,8 @@ var router = express.Router();
 
 // middleware to use for all requests
 router.use((req, res, next) => {
-    decodeURI(req);
-    next()
+	decodeURI(req);
+	next()
 })
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
@@ -71,7 +71,7 @@ router.route('/events')
 	// get all the events (accessed at GET http://localhost:8080/api/events)
 	.get(function (req, res) {
 		console.log("get events with query", req.query)
-		
+
 		eventModel.fetchAll(req.query, (err, results) => {
 			if (err) {
 				console.log(err);
@@ -107,6 +107,23 @@ router.route('/events/:event_id')
 			return res.status(200).json({ "status": "event updated" });
 		});
 	})
+	//post on event/id user add own event;
+	.post((req, res) => {
+		console.log(req.body)
+		eventModel.addEvent('user', [req.body.event], (err, result) => {
+			if (err) {
+				console.log(err);
+				return res.status(500).json({ "status": "error while saving into database" });
+			}
+
+			return res.status(200).json({
+				"status": "events created",
+				"result": result
+			});
+		})
+
+	})
+
 
 	// delete the event with this id
 	.delete(function (req, res) {
